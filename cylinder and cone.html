@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>האתגר ההנדסי: תכנון האביטאט</title>
+    
+    <!-- Tailwind CSS לעיצוב -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React ו-Babel להפעלת היישומון -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        .dir-ltr { direction: ltr; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- רכיבי אייקונים ---
+        const IconSettings = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+        );
+        const IconCylinder = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/></svg>
+        );
+        const IconTriangle = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/></svg>
+        );
+        const IconCalculator = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+        );
+        const IconCheckCircle = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+        );
+        const IconInfo = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        );
+
+        // --- היישומון המרכזי ---
+        function App() {
+            const [params, setParams] = useState({ r: 4, hCyl: 6 });
+            const [answers, setAnswers] = useState({ cyl: '', cone: '', total: '' });
+
+            useEffect(() => {
+                setAnswers({ cyl: '', cone: '', total: '' });
+            }, [params]);
+
+            const currentR = Number(params.r) || 0;
+            const currentHCyl = Number(params.hCyl) || 0;
+            const currentHCone = Math.max(0, 9 - currentHCyl);
+
+            const rSquared = Math.pow(currentR, 2);
+            const correctCyl = rSquared * currentHCyl;
+            const correctCone = (rSquared * currentHCone) / 3;
+            const correctTotal = correctCyl + correctCone;
+
+            const isCorrect = (input, target) => {
+                if (input === '') return false;
+                return Math.abs(Number(input) - target) <= 0.05;
+            };
+
+            const isCylCorrect = currentHCyl === 0 ? true : isCorrect(answers.cyl, correctCyl);
+            const isConeCorrect = currentHCone === 0 ? true : isCorrect(answers.cone, correctCone);
+            const isTotalCorrect = isCorrect(answers.total, correctTotal);
+            
+            const isAllCorrect = (currentHCyl > 0 || currentHCone > 0) && currentR >= 2 && currentR <= 5 && isCylCorrect && isConeCorrect && isTotalCorrect;
+
+            const handleRChange = (value) => {
+                let val = value;
+                if (val !== '' && Number(val) > 5) val = '5';
+                setParams(prev => ({ ...prev, r: val }));
+            };
+
+            const handleHCylChange = (value) => {
+                let val = value;
+                if (val !== '' && Number(val) > 9) val = '9';
+                setParams(prev => ({ ...prev, hCyl: val }));
+            };
+
+            // הגדרות ציור
+            const svgWidth = 320;
+            const svgHeight = 320;
+            const groundY = 270;
+            const centerX = svgWidth / 2;
+            
+            const totalH = 9;
+            const totalW = currentR * 2;
+            
+            const scaleH = totalH > 0 ? 220 / totalH : 35;
+            const scaleW = totalW > 0 ? 260 / totalW : 35;
+            const scale = Math.min(scaleH, scaleW, 35); 
+
+            // מידות פאודו תלת-ממד
+            const rectWidth = currentR * 2 * scale;
+            const rectX = centerX - rectWidth / 2;
+            const rectY = groundY - currentHCyl * scale;
+            const rectH = currentHCyl * scale;
+            const conePeakY = rectY - currentHCone * scale;
+            
+            const rx = rectWidth / 2;
+            const ry = Math.max(rx * 0.25, 4); // זווית הראייה לאליפסות
+
+            return (
+                <div className="p-4 md:p-8">
+                    <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+                        <div className="bg-teal-700 p-6 text-white text-center">
+                            <h1 className="text-3xl font-bold mb-2 flex justify-center items-center gap-3">
+                                <IconSettings className="w-8 h-8" />
+                                האתגר ההנדסי: תכנון חופשי
+                            </h1>
+                            <p className="text-teal-100 text-lg">קבעו את מידות המבנה בעצמכם, וחשבו את הנפחים בהתאם!</p>
+                        </div>
+
+                        <div className="bg-teal-50 border-b border-teal-200 p-6">
+                            <h2 className="text-lg font-bold text-teal-900 mb-4 flex items-center gap-2">
+                                שלב 1: הגדירו את מידות המבנה (גובה כולל: 9 מטרים)
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="bg-white p-3 rounded-lg border border-teal-200 shadow-sm relative">
+                                    <label className="block text-sm font-semibold text-slate-600 mb-1">רדיוס הבסיס (2 עד 5 מ')</label>
+                                    <input type="number" min="2" max="5" step="0.5" value={params.r} onChange={(e) => handleRChange(e.target.value)} className="w-full text-xl p-2 bg-slate-50 border rounded-md focus:ring-2 focus:ring-teal-500 outline-none text-center dir-ltr font-bold text-teal-800" />
+                                    {currentR < 2 && params.r !== '' && <span className="text-xs text-red-500 absolute -bottom-5 right-0 font-bold">המינימום הוא 2 מטרים</span>}
+                                </div>
+                                <div className="bg-white p-3 rounded-lg border border-teal-200 shadow-sm">
+                                    <label className="block text-sm font-semibold text-slate-600 mb-1">גובה גליל (0 עד 9 מ')</label>
+                                    <input type="number" min="0" max="9" step="1" value={params.hCyl} onChange={(e) => handleHCylChange(e.target.value)} className="w-full text-xl p-2 bg-slate-50 border rounded-md focus:ring-2 focus:ring-teal-500 outline-none text-center dir-ltr font-bold text-blue-700" />
+                                </div>
+                                <div className="bg-slate-100 p-3 rounded-lg border border-slate-200 shadow-sm opacity-90">
+                                    <label className="block text-sm font-semibold text-slate-500 mb-1">גובה חרוט (משלים ל-9 מ')</label>
+                                    <div className="w-full text-xl p-2 bg-slate-200 border border-slate-300 rounded-md text-center dir-ltr font-bold text-orange-600">{currentHCone}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                            <div className="bg-slate-800 rounded-xl p-4 flex flex-col items-center border-4 border-slate-700 shadow-inner relative">
+                                <h2 className="text-lg font-semibold mb-2 text-slate-300">תצוגה מקדימה למבנה</h2>
+                                <svg width={svgWidth} height={svgHeight} className="overflow-visible">
+                                    <defs>
+                                        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                                            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#334155" strokeWidth="0.5"/>
+                                        </pattern>
+                                    </defs>
+                                    <rect width="100%" height="100%" fill="url(#grid)" />
+                                    
+                                    {/* קו הקרקע שמתאים בדיוק לתחתית האליפסה */}
+                                    <line x1="10" y1={groundY + ry} x2={svgWidth - 10} y2={groundY + ry} stroke="#475569" strokeWidth="4" strokeLinecap="round" />
+                                    
+                                    {currentR >= 2 && (
+                                        <React.Fragment>
+                                            
+                                            {/* גליל תלת-ממדי */}
+                                            {currentHCyl > 0 && (
+                                                <g className="transition-all duration-500">
+                                                    {isCylCorrect ? (
+                                                        <React.Fragment>
+                                                            <ellipse cx={centerX} cy={rectY + rectH} rx={rx} ry={ry} fill="#3b82f6" stroke="#2563eb" strokeWidth="3" />
+                                                            <path d={`M ${rectX},${rectY} L ${rectX},${rectY + rectH} A ${rx},${ry} 0 0,0 ${rectX + rectWidth},${rectY + rectH} L ${rectX + rectWidth},${rectY} Z`} fill="#3b82f6" stroke="none" />
+                                                            <line x1={rectX} y1={rectY} x2={rectX} y2={rectY + rectH} stroke="#2563eb" strokeWidth="3" />
+                                                            <line x1={rectX + rectWidth} y1={rectY} x2={rectX + rectWidth} y2={rectY + rectH} stroke="#2563eb" strokeWidth="3" />
+                                                            {(!isConeCorrect || currentHCone === 0) && (
+                                                                <ellipse cx={centerX} cy={rectY} rx={rx} ry={ry} fill="#60a5fa" stroke="#2563eb" strokeWidth="3" />
+                                                            )}
+                                                        </React.Fragment>
+                                                    ) : (
+                                                        <React.Fragment>
+                                                            <ellipse cx={centerX} cy={rectY + rectH} rx={rx} ry={ry} fill="transparent" stroke="#64748b" strokeWidth="3" strokeDasharray="4 4" />
+                                                            <ellipse cx={centerX} cy={rectY} rx={rx} ry={ry} fill="transparent" stroke="#64748b" strokeWidth="3" strokeDasharray="4 4" />
+                                                            <line x1={rectX} y1={rectY} x2={rectX} y2={rectY + rectH} stroke="#64748b" strokeWidth="3" strokeDasharray="4 4" />
+                                                            <line x1={rectX + rectWidth} y1={rectY} x2={rectX + rectWidth} y2={rectY + rectH} stroke="#64748b" strokeWidth="3" strokeDasharray="4 4" />
+                                                        </React.Fragment>
+                                                    )}
+                                                    {currentHCyl * scale > 20 && <text x={centerX} y={rectY + rectH / 2 + 5} textAnchor="middle" fill={isCylCorrect ? "#fff" : "#94a3b8"} fontSize="14" fontWeight="bold">גליל (h={currentHCyl})</text>}
+                                                </g>
+                                            )}
+
+                                            {/* חרוט תלת-ממדי */}
+                                            {currentHCone > 0 && (
+                                                <g className="transition-all duration-500">
+                                                    {isConeCorrect ? (
+                                                        <path d={`M ${rectX},${rectY} A ${rx},${ry} 0 0,0 ${rectX + rectWidth},${rectY} L ${centerX},${conePeakY} Z`} fill="#f97316" stroke="#ea580c" strokeWidth="3" strokeLinejoin="round" />
+                                                    ) : (
+                                                        <React.Fragment>
+                                                            {(!isCylCorrect || currentHCyl === 0) && (
+                                                                <ellipse cx={centerX} cy={rectY} rx={rx} ry={ry} fill="transparent" stroke="#64748b" strokeWidth="3" strokeDasharray="4 4" />
+                                                            )}
+                                                            {isCylCorrect && currentHCyl > 0 && (
+                                                                <path d={`M ${rectX},${rectY} A ${rx},${ry} 0 0,0 ${rectX + rectWidth},${rectY}`} fill="transparent" stroke="#64748b" strokeWidth="3" strokeDasharray="4 4" />
+                                                            )}
+                                                            <path d={`M ${rectX},${rectY} L ${centerX},${conePeakY} L ${rectX + rectWidth},${rectY}`} fill="none" stroke="#64748b" strokeWidth="3" strokeDasharray="4 4" />
+                                                        </React.Fragment>
+                                                    )}
+                                                    {currentHCone * scale > 25 && <text x={centerX} y={rectY - (currentHCone * scale) / 3 + 5} textAnchor="middle" fill={isConeCorrect ? "#fff" : "#94a3b8"} fontSize="14" fontWeight="bold">חרוט (h={currentHCone})</text>}
+                                                </g>
+                                            )}
+                                            
+                                            {/* ציור הרדיוס (חצי קוטר) ממרכז הבסיס התחתון ימינה */}
+                                            <g>
+                                                <circle cx={centerX} cy={groundY} r="4" fill="#0f172a" />
+                                                <line x1={centerX} y1={groundY} x2={centerX + rx} y2={groundY} stroke="#0f172a" strokeWidth="2" strokeDasharray="4 3" />
+                                                <text 
+                                                    x={centerX + rx / 2} 
+                                                    y={groundY - 8} 
+                                                    textAnchor="middle" 
+                                                    fill="#0f172a" 
+                                                    fontSize="15" 
+                                                    fontWeight="900" 
+                                                    style={{ textShadow: '2px 2px 2px white, -2px -2px 2px white, 2px -2px 2px white, -2px 2px 2px white' }}
+                                                >
+                                                    r = {currentR}
+                                                </text>
+                                            </g>
+                                        </React.Fragment>
+                                    )}
+                                </svg>
+
+                                {isAllCorrect && (
+                                    <div className="absolute inset-0 bg-teal-900/90 rounded-xl flex flex-col items-center justify-center animate-in fade-in zoom-in duration-300">
+                                        <IconCheckCircle className="w-20 h-20 text-teal-400 mb-4" />
+                                        <h3 className="text-2xl font-bold text-white mb-2">תכנון אושר בהצלחה!</h3>
+                                        <p className="text-teal-100 mb-2">חישבתם נכון את כל הנפחים.</p>
+                                        <p className="text-sm text-teal-300">שנו את המידות למעלה כדי להתחיל משימה חדשה.</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex flex-col gap-4">
+                                <h2 className="text-lg font-bold text-teal-900 flex items-center gap-2">שלב 2: בצעו חישובים והקלידו תשובות</h2>
+                                <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm p-3 rounded-lg flex gap-2">
+                                    <IconInfo className="w-5 h-5 flex-shrink-0" />
+                                    <p>אם התוצאה היא שבר עשרוני ארוך, <strong>עגלו ל-2 ספרות אחרי הנקודה</strong> (לדוגמה: 5.33).</p>
+                                </div>
+
+                                {currentHCyl > 0 && currentR >= 2 && (
+                                    <div className={`p-4 rounded-xl border-2 transition-colors ${isCylCorrect ? 'bg-blue-50 border-blue-400' : 'bg-white border-slate-200 focus-within:border-teal-400'}`}>
+                                        <label className="flex items-center gap-2 font-bold text-slate-700 mb-3"><IconCylinder className={`w-5 h-5 ${isCylCorrect ? 'text-blue-600' : 'text-slate-400'}`} />מהו נפח החלק הגלילי?</label>
+                                        <div className="flex items-center gap-3">
+                                            <div className="relative flex-1 flex items-center">
+                                                <input type="number" step="any" value={answers.cyl} onChange={(e) => setAnswers({...answers, cyl: e.target.value})} disabled={isCylCorrect} className="w-full text-lg p-2 border rounded-lg dir-ltr focus:ring-2 focus:ring-teal-500 outline-none pr-10 text-center" placeholder="מקדמי π" />
+                                                <span className="absolute right-3 text-xl font-bold text-slate-500">π</span>
+                                            </div>
+                                            {isCylCorrect && <IconCheckCircle className="w-8 h-8 text-blue-500 animate-bounce" />}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {currentHCone > 0 && currentR >= 2 && (
+                                    <div className={`p-4 rounded-xl border-2 transition-colors ${isConeCorrect ? 'bg-orange-50 border-orange-400' : 'bg-white border-slate-200 focus-within:border-teal-400'}`}>
+                                        <label className="flex items-center gap-2 font-bold text-slate-700 mb-3"><IconTriangle className={`w-5 h-5 ${isConeCorrect ? 'text-orange-600' : 'text-slate-400'}`} />מהו נפח גג החרוט?</label>
+                                        <div className="flex items-center gap-3">
+                                            <div className="relative flex-1 flex items-center">
+                                                <input type="number" step="any" value={answers.cone} onChange={(e) => setAnswers({...answers, cone: e.target.value})} disabled={isConeCorrect} className="w-full text-lg p-2 border rounded-lg dir-ltr focus:ring-2 focus:ring-teal-500 outline-none pr-10 text-center" placeholder="מקדמי π" />
+                                                <span className="absolute right-3 text-xl font-bold text-slate-500">π</span>
+                                            </div>
+                                            {isConeCorrect && <IconCheckCircle className="w-8 h-8 text-orange-500 animate-bounce" />}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {(currentHCyl > 0 || currentHCone > 0) && currentR >= 2 && (
+                                    <div className={`p-4 rounded-xl border-2 transition-colors mt-2 ${isTotalCorrect ? 'bg-green-50 border-green-500 shadow-md' : 'bg-slate-50 border-slate-300 border-dashed'}`}>
+                                        <label className="flex items-center gap-2 font-bold text-slate-800 mb-3"><IconCalculator className={`w-5 h-5 ${isTotalCorrect ? 'text-green-600' : 'text-slate-500'}`} />מהו הנפח הכולל של המבנה?</label>
+                                        <div className="flex items-center gap-3">
+                                            <div className="relative flex-1 flex items-center">
+                                                <input type="number" step="any" value={answers.total} onChange={(e) => setAnswers({...answers, total: e.target.value})} disabled={isTotalCorrect} className="w-full text-xl font-bold p-3 border-2 border-slate-300 rounded-lg dir-ltr focus:ring-2 focus:ring-green-500 outline-none pr-10 text-center" placeholder="סכום הנפחים" />
+                                                <span className="absolute right-4 text-2xl font-bold text-slate-600">π</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {(currentR < 2 || (currentHCyl === 0 && currentHCone === 0)) && (
+                                    <div className="text-center p-6 text-slate-500 font-bold">הזינו מידות תקינות בחלק העליון כדי להתחיל! (רדיוס מינימום 2)</div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
